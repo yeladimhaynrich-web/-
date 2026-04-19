@@ -1,7 +1,7 @@
 name: Every Minute Bot
 on:
   schedule:
-    - cron: '*/1 * * * *'
+    - cron: '*/2 * * * *'
   workflow_dispatch:
 jobs:
   run:
