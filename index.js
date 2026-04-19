@@ -2,12 +2,12 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// --- הגדרות ---
+// --- הגדרות ליבה ---
 const API_TOKEN = "WU1BUElL.apik_JM0WlaGzqkD4CKL8hQmVaw.Drs8_LFoJ_PkF81B7sVLNvljnGkFIFjjzQBYtC85Bu4";
 const DB_FILE = path.join(__dirname, 'state.json');
 const MY_COOKIES = "_ga=GA1.1.1834539250.1773528574; _ga_YRWNRD8D9L=GS2.1.s1773528573$o1$g0$t1773528577$j56$l0$h0; _clck=hjg9sz%5E2%5Eg52%5E0%5E2268; _ga_FZYJJJ8ZLV=GS2.1.s1775747498$o6$g1$t1775747790$j60$l0$h0; channel_session=MTc3NjU2MjMyMnxOd3dBTkVWTVVGZzBUMWhHUzFWSlMwcFJTMU0yUkVVMVZVOVVXRXROTkVWS1JFNVFTRnBRVTFNMlIwOHpRelpYUjFneVJFRkpVa0U9fCj9GElL2i1FgdbjJ7rO__FQXU2nxfaUlDDjLKx8jKDL; cf_clearance=_vQTG236D_0BNCsCN_gsliL2A.5HPinflbZzKh5VyNg-1776562323-1.2.1.1-KUniLX8veELDrDMJVIShQX0Z8b3zIqKKGrLzUH.1guwBnxAaTjQB.EbG2gH_LufCSImJQYcTgYj.LM4yhjkz5kLuuvgWGb4Io3qa73.E7moN0uGc176OZM7Q2RPdwaxtvwUYrsrDFlEByjv.1NV0YpQ24ZSXOKVvktnIHwjdlv1L_Y4rKJOh3KUHwECjuKGX_bRXZO1sLXGBfTPxUb.KJsMsrXjubpBMsJ8K8bdeNCTxYBWNjzQE5PmgbWwQneUogwSH.tMytqixLmBTLd9EHiGF6xnysm0CqgJWCGrKpCfhwfF33DEDUiGWC4oZIx._sNYHLv.160Vxd5rZzQDJvQ";
 
-const FORCE_REUPLOAD = true; // תשאיר true כדי לראות את התיקון מיד בשלוחה 3
+const FORCE_REUPLOAD = true; // שנה ל-false אחרי שבדקת בטלפון והכל תקין
 
 function cleanTextMaster(text, isYeshiva = false) {
     if (!text) return "";
@@ -22,26 +22,42 @@ function cleanTextMaster(text, isYeshiva = false) {
     return clean.replace(/\s+/g, ' ').trim();
 }
 
+// פונקציית זמן משופרת במיוחד לאותנטי
 function extractTimePro(m) {
-    // 1. נסה למצוא שעה בטקסט (פורמט HH:mm)
-    let textMatch = String(m.text || m.content || "").match(/(\d{2}:\d{2})/);
-    if (textMatch) return textMatch[1];
-
-    // 2. נסה למצוא בשדות זמן נפוצים (כולל message_date של אותנטי)
-    let timeRaw = m.message_date || m.created_at || m.time || m.timestamp || m.date || "";
+    // 1. נסה לחלץ שעה משדות הזמן של אותנטי (message_date או created_at)
+    let rawDate = m.message_date || m.created_at || m.time || m.timestamp || "";
     
-    if (timeRaw) {
-        let d = new Date(timeRaw);
-        if (isNaN(d.getTime()) && /^\d+$/.test(timeRaw)) {
-            d = new Date(Number(timeRaw) * (timeRaw.length > 11 ? 1 : 1000));
+    if (rawDate) {
+        // המרה לאובייקט תאריך תוך התחשבות שזה זמן ישראל
+        let d = new Date(rawDate);
+        
+        // אם זה פורמט Unix (מספר)
+        if (isNaN(d.getTime()) && /^\d+$/.test(rawDate)) {
+            d = new Date(Number(rawDate) * (rawDate.length > 11 ? 1 : 1000));
         }
+
         if (!isNaN(d.getTime())) {
-            return d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem', hour12: false });
+            // שימוש ב-Intl כדי להוציא שעה בדיוק לפי שעון ישראל, בלי קשר איפה הבוט רץ
+            return new Intl.DateTimeFormat('he-IL', {
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Asia/Jerusalem',
+                hour12: false
+            }).format(d);
         }
     }
+
+    // 2. אם אין שדה זמן, נחפש שעה בתוך הטקסט (HH:mm)
+    let textMatch = String(m.text || m.content || "").match(/(\d{2}:\d{2})/);
+    if (textMatch) return textMatch[1];
     
-    // 3. ברירת מחדל: שעה נוכחית
-    return new Date().toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem', hour12: false });
+    // 3. ברירת מחדל אחרונה: זמן ישראל נוכחי
+    return new Intl.DateTimeFormat('he-IL', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Jerusalem',
+        hour12: false
+    }).format(new Date());
 }
 
 async function uploadToYemot(path, contents) {
@@ -76,7 +92,7 @@ async function run() {
 
             let msgs = Array.isArray(res.data) ? res.data : (res.data.messages || res.data.data || []);
             
-            // מיון הודעות לפי מזהה כדי להבטיח סדר כרונולוגי
+            // מיון מהישן לחדש לפי ID
             msgs.sort((a, b) => (Number(a.id || a._id) || 0) - (Number(b.id || b._id) || 0));
 
             for (const m of msgs) {
@@ -93,8 +109,9 @@ async function run() {
                     } else if (src.key === 'giz') {
                         finalStr = `הגיזרה בשעה: ${time}, ${cleanTxt}`;
                     } else {
-                        let srcLabel = m.source_name || m.source || src.name;
-                        finalStr = `${srcLabel} בשעה: ${time}, ${cleanTxt}`;
+                        // טיפול בשם המקור באותנטי
+                        let label = m.source_name || m.source || src.name;
+                        finalStr = `${label} בשעה: ${time}, ${cleanTxt}`;
                     }
 
                     const fileName = `${src.folder}/${String(state[src.key].count).padStart(3, '0')}.tts`;
