@@ -49,8 +49,6 @@ async function run() {
             if (src.useCookie) headers['Cookie'] = MY_COOKIES;
 
             const res = await axios.get(src.url, { headers, timeout: 15000 });
-            
-            // הדפסת תוכן לניפוי שגיאות
             console.log(`Debug ${src.name}: קיבלנו נתונים מסוג ${typeof res.data}`);
 
             let msgs = [];
@@ -72,7 +70,7 @@ async function run() {
                 const rawTxt = m.text || m.content || m.description || "";
                 const cleanTxt = cleanTextMaster(rawTxt);
                 
-                if (cleanTxt.length > 5) {
+                if (cleanTxt.length > 2) {
                     const fileName = `${src.folder}/${String(state[src.key].count).padStart(3, '0')}.tts`;
                     await uploadToYemot(fileName, `${src.name}: ${cleanTxt}`);
                     state[src.key].count = (state[src.key].count + 1) % 1000;
@@ -81,9 +79,6 @@ async function run() {
             }
         } catch (e) { 
             console.log(`⚠️ שגיאה ב-${src.name}: ${e.response ? e.response.status : e.message}`);
-            if (e.response && e.response.status === 401) {
-                console.log("💡 טיפ: ה-Cookie כנראה פקע או חסום לפי IP. נסה להוציא Cookie חדש ממצב גלישה בסתר.");
-            }
         }
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(state, null, 2));
