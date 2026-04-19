@@ -7,7 +7,7 @@ const API_TOKEN = "WU1BUElL.apik_JM0WlaGzqkD4CKL8hQmVaw.Drs8_LFoJ_PkF81B7sVLNvlj
 const DB_FILE = path.join(__dirname, 'state.json');
 const MY_COOKIES = `_ga=GA1.1.1834539250.1773528574; _ga_YRWNRD8D9L=GS2.1.s1773528573$o1$g0$t1773528577$j56$l0$h0; _clck=hjg9sz%5E2%5Eg52%5E0%5E2268; _ga_FZYJJJ8ZLV=GS2.1.s1775747498$o6$g1$t1775747790$j60$l0$h0; cf_clearance=_vQTG236D_0BNCsCN_gsliL2A.5HPinflbZzKh5VyNg-1776562323-1.2.1.1-KUniLX8veELDrDMJVIShQX0Z8b3zIqKKGrLzUH.1guwBnxAaTjQB.EbG2gH_LufCSImJQYcTgYj.LM4yhjkz5kLuuvgWGb4Io3qa73.E7moN0uGc176OZM7Q2RPdwaxtvwUYrsrDFlEByjv.1NV0YpQ24ZSXOKVvktnIHwjdlv1L_Y4rKJOh3KUHwECjuKGX_bRXZO1sLXGBfTPxUb.KJsMsrXjubpBMsJ8K8bdeNCTxYBWNjzQE5PmgbWwQneUogwSH.tMytqixLmBTLd9EHiGF6xnysm0CqgJWCGrKpCfhwfF33DEDUiGWC4oZIx._sNYHLv.160Vxd5rZzQDJvQ; channel_session=MTc3NjU2ODcyOHxOd3dBTkVWTVVGZzBUMWhHUzFWSlMwcFJTMU0yUkVVMVZVOVVXRXROTkVWS1JFNVFTRnBRVTFNMlIwOHpRelpYUjFneVJFRkpVa0U9fDm-C7j7zJXGA3mryBahOWt_wwrI_x9WqALSuSXVqma0`;
 
-const FORCE_REUPLOAD = false; // אם אתה רוצה לנקות ולהעלות הכל מחדש כדי לשמוע את השעות החדשות, תשנה ל-true פעם אחת
+const FORCE_REUPLOAD = true; // אם אתה רוצה לנקות ולהעלות הכל מחדש כדי לשמוע את השעות החדשות, תשנה ל-true פעם אחת
 
 // --- פונקציה שהופכת שעות למילים ---
 function timeToHebrewWords(timeStr) {
