@@ -1,18 +1,35 @@
 name: Every Minute Bot
+
 on:
   schedule:
-    - cron: '*/1 * * * *'
-  workflow_dispatch:
+    - cron: '*/1 * * * *' # הרצה בכל דקה עגולה
+  workflow_dispatch: # מאפשר הפעלה ידנית בלחיצת כפתור
+
 jobs:
-  run:
+  run-mivzakim:
     runs-on: ubuntu-latest
+    # נותן הרשאות כתיבה לבוט כדי שיוכל לעדכן את state.json
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v3
-      - run: npm install axios
-      - run: node index.js
-      - run: |
-          git config --global user.name "Bot"
-          git config --global user.email "bot@example.com"
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install Dependencies
+        run: npm install axios
+        
+      - name: Run Script
+        run: node index.js
+        
+      - name: Save Last State
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add state.json || true
-          git commit -m "update" || true
+          git commit -m "Update state [skip ci]" || true
           git push || true
