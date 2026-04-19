@@ -24,4 +24,3 @@ jobs:
           git add state.json || true
           git commit -m "Update state" || true
           git push || true
-          
