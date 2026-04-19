@@ -4,14 +4,11 @@ const path = require('path');
 
 const API_TOKEN = "WU1BUElL.apik_JM0WlaGzqkD4CKL8hQmVaw.Drs8_LFoJ_PkF81B7sVLNvljnGkFIFjjzQBYtC85Bu4";
 const DB_FILE = path.join(__dirname, 'state.json');
-
-// הקוקי של ישיב'ע (אם הוא ייתן 401, סימן שהוא פקע וצריך להוציא חדש מהדפדפן)
 const MY_COOKIES = "_ga=GA1.1.1834539250.1773528574; _ga_YRWNRD8D9L=GS2.1.s1773528573$o1$g0$t1773528577$j56$l0$h0; _clck=hjg9sz%5E2%5Eg52%5E0%5E2268; _ga_FZYJJJ8ZLV=GS2.1.s1775747498$o6$g1$t1775747790$j60$l0$h0; channel_session=MTc3NjU2MjMyMnxOd3dBTkVWTVVGZzBUMWhHUzFWSlMwcFJTMU0yUkVVMVZVOVVXRXROTkVWS1JFNVFTRnBRVTFNMlIwOHpRelpYUjFneVJFRkpVa0U9fCj9GElL2i1FgdbjJ7rO__FQXU2nxfaUlDDjLKx8jKDL; cf_clearance=_vQTG236D_0BNCsCN_gsliL2A.5HPinflbZzKh5VyNg-1776562323-1.2.1.1-KUniLX8veELDrDMJVIShQX0Z8b3zIqKKGrLzUH.1guwBnxAaTjQB.EbG2gH_LufCSImJQYcTgYj.LM4yhjkz5kLuuvgWGb4Io3qa73.E7moN0uGc176OZM7Q2RPdwaxtvwUYrsrDFlEByjv.1NV0YpQ24ZSXOKVvktnIHwjdlv1L_Y4rKJOh3KUHwECjuKGX_bRXZO1sLXGBfTPxUb.KJsMsrXjubpBMsJ8K8bdeNCTxYBWNjzQE5PmgbWwQneUogwSH.tMytqixLmBTLd9EHiGF6xnysm0CqgJWCGrKpCfhwfF33DEDUiGWC4oZIx._sNYHLv.160Vxd5rZzQDJvQ";
 
 function cleanTextMaster(text) {
     if (!text) return "";
     let clean = String(text);
-    // ניקוי ישיב'ע וקישורים
     const sigs = [/'ישיב'ע זוכע'ר'/g, /chat\.whatsapp\.com\/[^\s]+/g, /ישיב׳ע זוכע’ר בצ׳אט/g, /https:\/\/yeshiva-zucher\.chatfree\.app/g, /wa\.me\/[^\s]+/g];
     sigs.forEach(s => clean = clean.replace(s, ""));
     clean = clean.replace(/\b[\w\-]+\.(jpg|jpeg|png|gif|mp4|pdf|heic)\b/gi, "");
@@ -23,7 +20,7 @@ function cleanTextMaster(text) {
 async function uploadToYemot(p, contents) {
     try {
         await axios.post("https://www.call2all.co.il/ym/api/UploadTextFile", new URLSearchParams({ token: API_TOKEN, what: "ivr2:" + p, contents }).toString());
-        console.log(`✅ הועלה: ${p}`);
+        console.log(`✅ הועלה בהצלחה: ${p}`);
     } catch (e) { console.log(`❌ שגיאה בימות: ${e.message}`); }
 }
 
@@ -40,7 +37,7 @@ async function run() {
     ];
 
     for (const src of sources) {
-        console.log(`--- בודק: ${src.name} ---`);
+        console.log(`--- בודק מקור: ${src.name} ---`);
         try {
             const res = await axios.get(src.url, {
                 headers: { 
@@ -50,16 +47,18 @@ async function run() {
                 timeout: 15000
             });
 
-            // חילוץ הודעות בצורה חסינת-קריסה
-            let raw = res.data;
-            let msgs = Array.isArray(raw) ? raw : (raw.messages || raw.data || []);
-            
-            if (!Array.isArray(msgs)) {
-                console.log(`⚠️ ${src.name} לא החזיר מערך. סוג שהתקבל: ${typeof msgs}`);
+            // חילוץ הודעות - הגרסה החדשה והבטוחה
+            let rawData = res.data;
+            let msgs = [];
+            if (Array.isArray(rawData)) msgs = rawData;
+            else if (rawData && rawData.messages) msgs = rawData.messages;
+            else if (rawData && rawData.data) msgs = rawData.data;
+
+            if (msgs.length === 0) {
+                console.log(`ℹ️ לא נמצאו הודעות חדשות ב-${src.name}`);
                 continue;
             }
 
-            // הפיכה בטוחה
             const final = [...msgs].reverse();
 
             for (const m of final) {
